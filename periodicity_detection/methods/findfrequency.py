@@ -2,19 +2,84 @@ import sys
 from typing import Tuple
 
 import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 from scipy.stats import linregress
 from spectrum import aryule, arma2psd
 
 
-class FindFrequency:
-    """
-    See Also
+def findfrequency(data: np.ndarray, detrend: bool = True) -> int:
+    """Returns the period of the dominant frequency of a time series (average cycle
+    length).
+
+    This implementation is based on the R implementation of the same name in the
+    ``forecast``-package. First, (per default) a linear trend is removed from the
+    time series. Then, the spectral density is estimated using the Yule-Walker method.
+    The period of the dominant frequency is then estimated as the inverse of the
+    frequency with the largest spectral density.
+
+    Parameters
+    ----------
+    data : array_like
+        Array containing the time series data.
+    detrend : bool, optional
+        Whether to detrend the time series before estimating the frequency.
+
+    Returns
+    -------
+    period : int
+        Estimated period size of the time series.
+
+    Examples
     --------
 
-    `https://rdrr.io/cran/forecast/man/findfrequency.html`_ :
+    Estimate the period length of a simple sine curve:
+
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42)
+    >>> data = np.sin(np.linspace(0, 8*np.pi, 1000)) + rng.random(1000)/10
+    >>> from periodicity_detection import findfrequency
+    >>> period = findfrequency(data, detrend=True)
+
+    References
+    ----------
+    `<https://rdrr.io/cran/forecast/man/findfrequency.html>`_ :
         original implementation in R
+    """
+    return FindFrequency(
+        detrend=detrend,
+        plot=False,
+        verbose=0,
+    )(data)
+
+
+class FindFrequency:
+    """Returns the period of the dominant frequency of a time series (average cycle
+    length) based on the ``forcast.findfrequency`` R implementation.
+
+    Parameters
+    ----------
+    plot : bool, optional
+        Whether to plot spectrum and periodogram.
+    verbose : int, optional
+        Controls the log output verbosity. If set to ``0``, no messages are printed;
+        when ``>=3``, all messages are printed.
+    detrend : bool, optional
+        Removes linear trend from the time series before calculating the candidate
+        periods.
+
+    Returns
+    -------
+    period : int
+        Estimated period size of the time series as the inverse of the dominant
+        frequency.
+
+    References
+    ----------
+    `<https://rdrr.io/cran/forecast/man/findfrequency.html>`_ :
+        original implementation in R
+
+    See Also
+    --------
     https://rdrr.io/r/stats/spec.ar.html :
         ``spec.ar`` is used in the original implementation to compute the time series
         spectrum (PSD)
@@ -155,6 +220,18 @@ class FindFrequency:
         return f, int(p)
 
     def __call__(self, data: np.ndarray) -> int:
+        """Compute dominant period of time series.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Time series data.
+
+        Returns
+        -------
+        period : int
+            Dominant period of time series.
+        """
         index = np.arange(data.shape[0])
         if self._detrend:
             self._print("Detrending time series with linear model")
@@ -214,19 +291,3 @@ class FindFrequency:
             axs[0, 0].set_ylabel("power")
             axs[0, 0].legend()
         return p
-
-
-if __name__ == "__main__":
-    df = pd.read_csv("data/tmp/taylor.csv", index_col=0)
-    df["res"] = pd.read_csv("data/tmp/residuals.csv", index_col=0).iloc[:, 0]
-    # df.plot(subplots=True)
-    data = df.iloc[:, 0].values
-    period = FindFrequency(plot=True, verbose=3)(data)
-
-    print("findfrequency period =", period)
-
-    # plt.figure()
-    # data = pd.read_csv("data/tmp/spec.csv", index_col=0).iloc[:, 0]
-    # plt.plot(data)
-    # plt.yscale("log")
-    plt.show()

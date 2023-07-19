@@ -15,7 +15,15 @@ from scipy.stats import linregress
 from .number_peaks import number_peaks
 
 
-class Autoperiod:
+def autoperiod(
+    data: np.ndarray,
+    *,
+    pt_n_iter: int = 100,
+    random_state: Any = None,
+    detrend: bool = False,
+    use_number_peaks_fallback: bool = False,
+    number_peaks_n: int = 100,
+) -> int:
     """AUTOPERIOD method calculates the period in a two-step process. First, it
     extracts candidate periods from the periodogram (using an automatically
     determined power threshold, see ``pt_n_iter`` parameter). Then, it uses the circular
@@ -27,6 +35,59 @@ class Autoperiod:
 
     - Potential detrending of the time series before estimating the period.
     - Potentially returns multiple detected periodicities.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Array containing the data of a univariate, equidistant time series.
+    pt_n_iter : int
+        Number of shuffling iterations to determine the power threshold. The higher the
+        number, the tighter the confidence interval. The percentile is calculated using
+        :math:`percentile = 1 - 1 / pt\\_n\\_iter`.
+    random_state : Any
+        Seed for the random number generator. Used for determining the power threshold
+        (data shuffling).
+    detrend : bool
+        Removes linear trend from the time series before calculating the candidate
+        periods. (Addition to original method).
+    use_number_peaks_fallback : bool
+        If ``True`` and no periods are found, the number of peaks method is used as a
+        fallback. (Addition to original method).
+    number_peaks_n: int
+        Number of peaks to return when using the number of peaks method as a fallback.
+
+    Examples
+    --------
+
+    Estimate the period length of a simple sine curve:
+
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42)
+    >>> data = np.sin(np.linspace(0, 8*np.pi, 1000)) + rng.random(1000)/10
+    >>> from periodicity_detection import autoperiod
+    >>> period = autoperiod(data, random_state=42, detrend=True)
+
+    See Also
+    --------
+    `<https://epubs.siam.org/doi/epdf/10.1137/1.9781611972757.40>`_ : Paper reference
+    """
+    return Autoperiod(  # type: ignore
+        pt_n_iter=pt_n_iter,
+        random_state=random_state,
+        detrend=detrend,
+        use_number_peaks_fallback=use_number_peaks_fallback,
+        number_peaks_n=number_peaks_n,
+        plot=False,
+        verbose=0,
+        return_multi=1,
+    )(data)
+
+
+class Autoperiod:
+    """AUTOPERIOD method to calculate the most dominant periods in a time series using
+    the periodogram and the autocorrelation function (ACF).
+
+    For more details, please see :func:`periodicity_detection.autoperiod`!
 
     Parameters
     ----------
@@ -45,19 +106,16 @@ class Autoperiod:
     detrend : bool
         Removes linear trend from the time series before calculating the candidate
         periods. (Addition to original method).
+    use_number_peaks_fallback : bool
+        If ``True`` and no periods are found, the number of peaks method is used as a
+        fallback. (Addition to original method).
+    number_peaks_n: int
+        Number of peaks to return when using the number of peaks method as a fallback.
     return_multi : int
         Maximum number of periods to return.
 
     Examples
     --------
-
-    Estimate the period length of a simple sine curve:
-
-    >>> import numpy as np
-    >>> rng = np.random.default_rng(42)
-    >>> data = np.sin(np.linspace(0, 8*np.pi, 1000)) + rng.random(1000)/10
-    >>> period = Autoperiod(random_state=42, detrend=True)(data)
-
     Plot the periodogram and ACF while computing the period size:
 
     >>> import numpy as np
@@ -66,10 +124,6 @@ class Autoperiod:
     >>> data = np.sin(np.linspace(0, 8*np.pi, 1000)) + rng.random(1000)/10
     >>> period = Autoperiod(random_state=42, detrend=True, plot=True)(data)
     >>> plt.show()
-
-    See Also
-    --------
-    `https://epubs.siam.org/doi/epdf/10.1137/1.9781611972757.40`_ : Paper reference
     """
 
     # potential improvement:
@@ -98,6 +152,19 @@ class Autoperiod:
         self._return_multi = return_multi
 
     def __call__(self, data: np.ndarray) -> Union[List[int], int]:
+        """Estimate the period length of a time series.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Array containing the data of a univariate, equidistant time series.
+
+        Returns
+        -------
+        periods : Union[List[int], int]
+            List of periods sorted by their power. If ``return_multi`` is set to ``1``,
+            only the most dominant period is returned.
+        """
         if self._detrend:
             self._print("Detrending")
             index = np.arange(data.shape[0])
@@ -245,7 +312,8 @@ class Autoperiod:
                 if end < N - 1:
                     end += 1
             self._print(
-                f"processing hint at {N//k}, k={k}: begin={begin}, end={end+1}", level=2
+                f"processing hint at {N // k}, k={k}: begin={begin}, end={end + 1}",
+                level=2,
             )
             slopes = {}
 

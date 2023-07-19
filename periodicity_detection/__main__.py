@@ -2,6 +2,16 @@ import argparse
 import sys
 from pathlib import Path
 
+import numpy as np
+
+from ._version import __version__
+from .methods import autocorrelation
+from .methods import fft
+from .methods import find_length
+from .methods import number_peaks
+from .methods.autoperiod import Autoperiod
+from .methods.findfrequency import FindFrequency
+
 
 def register_periodicity_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
@@ -28,7 +38,7 @@ def register_periodicity_arguments(parser: argparse.ArgumentParser) -> None:
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
     # find length algorithm
-    method_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "find-length",
         help="Determine period size based on ACF as in the TSB-UAD repository.",
     )
@@ -49,14 +59,10 @@ def register_periodicity_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
     # autocorrelation algorithm
-    method_parser = subparsers.add_parser(
-        "autocorrelation", help="Determine period size based on ACF."
-    )
+    subparsers.add_parser("autocorrelation", help="Determine period size based on ACF.")
 
     # fft algorithm
-    method_parser = subparsers.add_parser(
-        "fft", help="Determine period size based on FFT."
-    )
+    subparsers.add_parser("fft", help="Determine period size based on FFT.")
 
     # autoperiod algorithm
     method_parser = subparsers.add_parser(
@@ -119,15 +125,6 @@ def register_periodicity_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def main(args: argparse.Namespace) -> int:
-    # speed up startup by importing modules lazily
-    import numpy as np
-    from .find_length import find_length
-    from .number_peaks import number_peaks
-    from .autocorrelation import autocorrelation
-    from .autoperiod import Autoperiod
-    from .fft import fft
-    from .findfrequency import FindFrequency
-
     command = args.subcommand
 
     # load data
@@ -149,10 +146,13 @@ def main(args: argparse.Namespace) -> int:
 
     if command == "find-length":
         return find_length(data)
+
     elif command == "number-peaks":
         return number_peaks(data, n=args.min_support)
+
     elif command == "autocorrelation":
         return autocorrelation(data)
+
     elif command == "autoperiod":
         period = Autoperiod(
             pt_n_iter=args.power_threshold_iter,
@@ -169,8 +169,10 @@ def main(args: argparse.Namespace) -> int:
 
             plt.show()
         return period  # type: ignore
+
     elif command == "fft":
         return fft(data)
+
     elif command == "findfrequency":
         period = FindFrequency(
             plot=args.plot, verbose=args.verbose, detrend=not args.disable_detrending
@@ -180,13 +182,12 @@ def main(args: argparse.Namespace) -> int:
 
             plt.show()
         return period
+
     else:
         raise ValueError(f"Unknown method for period estimation: {command}!")
 
 
 def cli() -> None:
-    from ._version import __version__
-
     parser = argparse.ArgumentParser(
         "periodicity",
         description="Detect the dominant period in univariate, equidistant time "

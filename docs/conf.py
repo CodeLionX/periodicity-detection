@@ -80,6 +80,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/1.21/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/version/1.3/", None),
     "statsmodels": ("https://www.statsmodels.org/v0.13.5/", None),
+    "tsfresh": ("https://tsfresh.readthedocs.io/en/latest/", None),
 }
 
 # -- sphinx_rtd_dark_mode settings -------------------------------------------

@@ -4,27 +4,42 @@ import numpy as np
 
 
 def number_peaks(data: np.ndarray, n: int) -> int:
-    """Calculates the number of peaks of at least support n in the time series. A peak
-    of support n is defined as a subsequence where a value occurs, which is bigger than
-    its n neighbours to the left and to the right. The time series length divided by
-    the number of peaks defines the period size.
+    """Determines the period size based on the number of peaks. This method is based on
+    tsfresh's implementation of the same name:
+    :func:`~tsfresh.feature_extraction.feature_calculators.number_peaks`.
+
+    Calculates the number of peaks of at least support :math:`n` in the time series.
+    A peak of support :math:`n` is defined as a subsequence where a value occurs, which
+    is bigger than its :math:`n` neighbours to the left and to the right. The time
+    series length divided by the number of peaks defines the period size.
 
     Parameters
     ----------
     data : array_like
-        time series to calculate the number of peaks of
+        Time series to calculate the number of peaks of.
     n : int
-        the required support for the peaks
+        The required support for the peaks.
 
     Returns
     -------
     period_size : float
-        the estimated period size
+        The estimated period size.
+
+    Examples
+    --------
+
+    Estimate the period length of a simple sine curve:
+
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42)
+    >>> data = np.sin(np.linspace(0, 8*np.pi, 1000)) + rng.random(1000)/10
+    >>> from periodicity_detection import number_peaks
+    >>> period = number_peaks(data)
 
     See Also
     --------
     tsfresh.feature_extraction.number_peaks :
-        tsfresh's implementation, on which this method is based on
+        tsfresh's implementation, on which this method is based on.
     """
     x_reduced = data[n:-n]
 

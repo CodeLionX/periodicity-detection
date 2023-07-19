@@ -23,6 +23,8 @@ with open(HERE / "requirements.dev") as fh:
         for dep in fh.read().splitlines()
         if dep and not dep.startswith("-") and not dep.startswith("#")
     ]
+with open(HERE / "docs" / "requirements.txt") as fh:
+    DOCS_REQUIRED = fh.read().splitlines()
 
 
 class PyTestCommand(Command):
@@ -141,6 +143,7 @@ if __name__ == "__main__":
         install_requires=REQUIRED,
         extras_require={
             "dev": DEV_REQUIRED,
+            "docs": DOCS_REQUIRED,
         },
         python_requires=">=3.7",
         test_suite="tests",

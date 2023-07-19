@@ -3,6 +3,7 @@
 Detect the dominant period in univariate, equidistant time series data.
 
 [![CI](https://github.com/CodeLionX/periodicity-detection/actions/workflows/build.yml/badge.svg)](https://github.com/CodeLionX/periodicity-detection/actions/workflows/build.yml)
+[![Documentation Status](https://readthedocs.org/projects/periodicity-detection/badge/?version=latest)](https://periodicity-detection.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/CodeLionX/periodicity-detection/branch/main/graph/badge.svg?token=6QXOCY4TS2)](https://codecov.io/gh/CodeLionX/periodicity-detection)
 [![PyPI package](https://badge.fury.io/py/periodicity-detection.svg)](https://badge.fury.io/py/periodicity-detection)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,3 +19,5 @@ The toolbox contains the following methods:
 - `find_length`
 - Python-adaption of the R package `forecast`'s `findfrequency` function
 - Number of Peaks-method
+
+📖 Periodicity Detection's documentation is hosted at https://periodicity-detection.readthedocs.io.

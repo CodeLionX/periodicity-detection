@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import sys
 import warnings
-from typing import Any, List, Tuple, TypeVar, Generic, overload, Optional
-from typing_extensions import Literal
+from typing import Any, List, Tuple, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,10 +14,8 @@ from scipy.stats import linregress
 
 from .number_peaks import number_peaks
 
-T = TypeVar("T", int, List[int])
 
-
-class Autoperiod(Generic[T]):
+class Autoperiod:
     """AUTOPERIOD method calculates the period in a two-step process. First, it
     extracts candidate periods from the periodogram (using an automatically
     determined power threshold, see ``pt_n_iter`` parameter). Then, it uses the circular
@@ -77,41 +74,8 @@ class Autoperiod(Generic[T]):
 
     # potential improvement:
     # https://link.springer.com/chapter/10.1007/978-3-030-39098-3_4
-
-    # call with return_multi=1
-    @overload
     def __init__(
-        self: Autoperiod[int],
-        *,
-        pt_n_iter: int = ...,
-        random_state: Any = ...,
-        plot: bool = ...,
-        verbose: int = ...,
-        detrend: bool = ...,
-        use_number_peaks_fallback: bool = ...,
-        number_peaks_n: int = ...,
-        return_multi: Literal[1] = 1,
-    ):
-        ...
-
-    # call with return_multi>1
-    @overload
-    def __init__(
-        self: Autoperiod[List[int]],
-        *,
-        pt_n_iter: int = ...,
-        random_state: Any = ...,
-        plot: bool = ...,
-        verbose: int = ...,
-        detrend: bool = ...,
-        use_number_peaks_fallback: bool = ...,
-        number_peaks_n: int = ...,
-        return_multi: int = ...,
-    ):
-        ...
-
-    def __init__(
-        self: Autoperiod[T],
+        self,
         *,
         pt_n_iter: int = 100,
         random_state: Any = None,
@@ -133,15 +97,7 @@ class Autoperiod(Generic[T]):
         self._orig_data: Optional[np.ndarray] = None
         self._return_multi = return_multi
 
-    @overload
-    def __call__(self: Autoperiod[int], data: np.ndarray) -> int:
-        ...
-
-    @overload
-    def __call__(self: Autoperiod[List[int]], data: np.ndarray) -> List[int]:
-        ...
-
-    def __call__(self: Autoperiod[T], data: np.ndarray) -> T:
+    def __call__(self, data: np.ndarray) -> Union[List[int], int]:
         if self._detrend:
             self._print("Detrending")
             index = np.arange(data.shape[0])

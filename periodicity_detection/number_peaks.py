@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 
 
@@ -26,7 +28,7 @@ def number_peaks(data: np.ndarray, n: int) -> int:
     """
     x_reduced = data[n:-n]
 
-    res = None
+    res: Optional[np.ndarray] = None
     for i in range(1, n + 1):
         result_first = x_reduced > _roll(data, i)[n:-n]
 
@@ -36,13 +38,13 @@ def number_peaks(data: np.ndarray, n: int) -> int:
             res &= result_first
 
         res &= x_reduced > _roll(data, -i)[n:-n]
-    n_peaks = np.sum(res)
+    n_peaks = np.sum(res)  # type: ignore
     if n_peaks < 1:
         return 1
     return data.shape[0] // n_peaks
 
 
-def _roll(a: np.ndarray, shift: int):
+def _roll(a: np.ndarray, shift: int) -> np.ndarray:
     """Exact copy of tsfresh's ``_roll``-implementation:
     https://github.com/blue-yonder/tsfresh/blob/611e04fb6f7b24f745b4421bbfb7e986b1ec0ba1/tsfresh/feature_extraction/feature_calculators.py#L49  # noqa: E501
 

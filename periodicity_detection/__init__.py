@@ -56,7 +56,7 @@ def estimate_periodicity(
         detrend = kwargs.get("detrend", True)
         use_number_peaks_fallback = kwargs.get("use_number_peaks_fallback", True)
         n = kwargs.get("n", 100)
-        return Autoperiod(
+        return Autoperiod(  # type: ignore
             pt_n_iter=pt_n_iter,
             random_state=random_state,
             plot=plot,
@@ -64,6 +64,7 @@ def estimate_periodicity(
             detrend=detrend,
             use_number_peaks_fallback=use_number_peaks_fallback,
             number_peaks_n=n,
+            return_multi=1,
         )(data)
 
     elif method == "fft":

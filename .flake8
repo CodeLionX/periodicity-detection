@@ -1,0 +1,13 @@
+[flake8]
+show-source = True
+# Play nice with black, default there is 88
+max-line-length = 88
+
+extend-exclude =
+    build
+
+extend-ignore =
+    # No whitespace before ':' in [x : y]
+    E203
+    # No lambdas — too strict
+    E731

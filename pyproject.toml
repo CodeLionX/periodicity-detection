@@ -1,0 +1,39 @@
+[metadata]
+license_files = {file="LICENSE"}
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.coverage.run]
+branch = false
+omit = ["**/__main__.py"]
+
+[tool.coverage.report]
+exclude_lines =["pragma: no cover", "raise NotImplementedError", "\\.\\.\\.", "def __repr__", "pass"]
+fail_under = 80
+skip_covered = true
+sort = "Cover"
+
+[tool.black]
+target-version = ['py37']
+
+[tool.isort]
+py_version = "37"
+profile = "black" # Play nicely with black
+src_paths = ["periodicity_detection", "tests"]
+
+[tool.mypy]
+python_version = "3.7"
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.*",
+    "matplotlib.*",
+    "pandas.*",
+    "statsmodels.*",
+    "scipy.*",
+    "spectrum.*"
+]
+ignore_missing_imports = true

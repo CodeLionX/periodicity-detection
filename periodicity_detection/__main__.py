@@ -162,12 +162,13 @@ def main(args: argparse.Namespace) -> int:
             detrend=not args.disable_detrending,
             use_number_peaks_fallback=args.number_peaks_fallback,
             number_peaks_n=args.min_support,
+            return_multi=1,
         )(data)
         if args.plot:
             import matplotlib.pyplot as plt
 
             plt.show()
-        return period
+        return period  # type: ignore
     elif command == "fft":
         return fft(data)
     elif command == "findfrequency":

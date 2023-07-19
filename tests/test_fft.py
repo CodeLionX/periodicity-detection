@@ -1,6 +1,6 @@
 import numpy as np
 
-from periodicity_detection.fft import fft
+from periodicity_detection.methods import fft
 
 
 def test_detects_period():

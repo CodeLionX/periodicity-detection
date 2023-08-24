@@ -17,8 +17,8 @@ def register_periodicity_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "dataset_path",
         type=Path,
-        help="Path to the dataset for which the dominant period size should be "
-        "estimated.",
+        help="Path to the dataset for which the dominant period size should "
+        "be estimated.",
     )
     parser.add_argument(
         "--use-initial-n",

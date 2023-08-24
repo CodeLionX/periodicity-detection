@@ -23,6 +23,7 @@ def autoperiod(
     detrend: bool = False,
     use_number_peaks_fallback: bool = False,
     number_peaks_n: int = 100,
+    acf_hill_steepness: float = 0.0,
 ) -> int:
     """AUTOPERIOD method calculates the period in a two-step process. First, it
     extracts candidate periods from the periodogram (using an automatically
@@ -35,6 +36,8 @@ def autoperiod(
 
     - Potential detrending of the time series before estimating the period.
     - Potentially returns multiple detected periodicities.
+    - Option to use the number of peaks method as a fallback if no periods are found.
+    - Potentially exclude periods, whose ACF hill is not steep enough.
 
     Parameters
     ----------
@@ -55,6 +58,11 @@ def autoperiod(
         fallback. (Addition to original method).
     number_peaks_n: int
         Number of peaks to return when using the number of peaks method as a fallback.
+    acf_hill_steepness : float
+        Minimum steepness of the ACF hill to consider a period valid. The higher the
+        value, the steeper the hill must be. A value of ``0`` means that any hill is
+        considered valid. The threshold is applied to the sum of the absolute slopes of
+        the two fitted lines left and right of the candidate period.
 
     Examples
     --------
@@ -77,6 +85,7 @@ def autoperiod(
         detrend=detrend,
         use_number_peaks_fallback=use_number_peaks_fallback,
         number_peaks_n=number_peaks_n,
+        acf_hill_steepness=acf_hill_steepness,
         plot=False,
         verbose=0,
         return_multi=1,
@@ -113,6 +122,11 @@ class Autoperiod:
         Number of peaks to return when using the number of peaks method as a fallback.
     return_multi : int
         Maximum number of periods to return.
+    acf_hill_steepness : float
+        Minimum steepness of the ACF hill to consider a period valid. The higher the
+        value, the steeper the hill must be. A value of ``0`` means that any hill is
+        considered valid. The threshold is applied to the sum of the absolute slopes of
+        the two fitted lines left and right of the candidate period.
 
     Examples
     --------
@@ -139,6 +153,7 @@ class Autoperiod:
         use_number_peaks_fallback: bool = False,
         number_peaks_n: int = 100,
         return_multi: int = 1,
+        acf_hill_steepness: float = 0.0,
     ):
         self._pt_n_iter = pt_n_iter
         self._rng: np.random.Generator = np.random.default_rng(random_state)
@@ -150,6 +165,7 @@ class Autoperiod:
         self._trend: Optional[np.ndarray] = None
         self._orig_data: Optional[np.ndarray] = None
         self._return_multi = return_multi
+        self._acf_hill_steepness = acf_hill_steepness
 
     def __call__(self, data: np.ndarray) -> Union[List[int], int]:
         """Estimate the period length of a time series.
@@ -303,6 +319,11 @@ class Autoperiod:
             message=r".*invalid value encountered.*",
         )
         for k, f, power in period_hints:
+            if k < 2:
+                self._print(f"processing hint at {N // k}: k={k}, f={f}", level=2)
+                self._print("k < 2 --> INVALID", level=3)
+                continue
+
             # determine search interval
             begin = int((N / (k + 1) + N / k) / 2) - 1
             end = int((N / k + N / (k - 1)) / 2) + 1
@@ -354,30 +375,32 @@ class Autoperiod:
             optimal_t = begin + t
             slope = slopes[t]
             self._print(f"found optimal t: {optimal_t} (t={t})", level=3)
-            # self._print(f"slopes={slopes[0].slope:.4f},{slopes[1].slope:.4f}", l=3)
+
             # change from paper: we require a certain hill size to prevent noise
             # influencing our results:
-            if (
-                slope[0].slope > 0 > slope[1].slope
-            ):  # and np.abs(slopes[0].slope) + np.abs(slopes[1].slope) > 0.01:
+            lslope = slope[0].slope
+            rslope = slope[1].slope
+            steepness = np.abs(lslope) + np.abs(rslope)
+            if lslope < 0 < rslope:
+                self._print("valley detected --> INVALID", level=3)
+
+            elif steepness < self._acf_hill_steepness:
+                self._print(
+                    f"insufficient steepness ({np.abs(slope[0].slope):.4f} and "
+                    f"{np.abs(slope[1].slope):.4f}) --> INVALID",
+                    level=3,
+                )
+
+            elif lslope > 0 > rslope:
                 self._print("hill detected --> VALID", level=3)
                 period = begin + np.argmax(acf[begin : end + 1])
                 self._print(f"corrected period (from {N // k}): {period}", level=3)
                 ranges.append((begin, end, optimal_t, period, slope))
                 if self._return_multi <= 1:
                     break
-            elif slope[0].slope < 0 < slope[1].slope:
-                self._print("valley detected --> INVALID", level=3)
-            # elif np.abs(slopes[0].slope) + np.abs(slopes[1].slope) <= 0.01:
-            #     self._print(
-            #         f"insufficient steepness ({np.abs(slopes[0].slope):.4f} and "
-            #         f"{np.abs(slopes[1].slope):.4f}) --> INVALID",
-            #         l=3
-            #     )
+
             else:
                 self._print("not a hill, but also not a valley --> INVALID", level=3)
-            # period = begin + np.argmax(acf[begin:end + 1])
-            # ranges.append((begin, end, optimal_t, period, slopes))
 
         warnings.filterwarnings(
             action="default",
@@ -400,7 +423,7 @@ class Autoperiod:
             else:
                 axs[0].plot(data, label="time series", color="black")
 
-            axs[-1].set_title("Circular autocorrelation")
+            axs[-1].set_title(f"Circular autocorrelation ({len(ranges)} valid periods)")
             axs[-1].plot(acf, label="ACF", color="blue")
             data_min = acf.min()
             data_max = acf.max()

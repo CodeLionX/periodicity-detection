@@ -28,6 +28,9 @@ The toolbox contains the following methods:
 
 📖 Periodicity Detection's documentation is hosted at https://periodicity-detection.readthedocs.io.
 
+Recommended reading: [Window Size Selection In Unsupervised Time Series Analytics: A Review and Benchmark](https://project.inria.fr/aaltd22/files/2022/08/AALTD22_paper_3876.pdf):
+Workshop paper that compares the _Autocorrelation_, _FFT_ (_DFT_ in the paper), and _AutoPeriod_ methods to three other methods ([Code](https://github.com/ermshaua/window-size-selection)).
+
 # Installation
 
 You can install Periodicity Detection as a package or from source.

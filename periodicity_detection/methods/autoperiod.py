@@ -409,12 +409,12 @@ class Autoperiod:
         )
 
         if self._plot:
-            n_plots = 3 if self._detrend and self._trend else 2
+            n_plots = 3 if self._detrend and self._trend is not None else 2
             fig, axs = plt.subplots(n_plots, 1, sharex="col")
             axs[0].set_title("Original time series")
             axs[0].set_xlabel("time")
 
-            if self._trend and self._orig_data:
+            if self._trend is not None and self._orig_data is not None:
                 axs[0].plot(self._orig_data, label="time series", color="blue")
                 axs[0].plot(self._trend, label="linear trend", color="black")
                 axs[1].set_title("Detrended time series")

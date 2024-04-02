@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import warnings
-from typing import Any, List, Tuple, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -267,15 +267,27 @@ class Autoperiod:
             f"inspecting periodogram between 2 and {N // 2} (frequencies 0 and 0.5)",
             level=2,
         )
-        period_hints = []
+        period_candidates: Dict[int, Tuple[int, float, float]] = {}
+        removed_hints = 0
         for i in np.arange(2, N // 2):
             if p_den[i] > p_threshold:
-                period_hints.append((k[i], f[i], p_den[i]))
-                self._print(
-                    f"detected hint at bin k={k[i]} (f={f[i]:.4f}, "
-                    f"power={p_den[i]:.2f})",
-                    level=3,
-                )
+                period = N // k[i]
+                if period not in period_candidates:
+                    period_candidates[period] = (k[i], f[i], p_den[i])
+                    self._print(
+                        f"detected hint at bin k={k[i]} (f={f[i]:.4f}, "
+                        f"power={p_den[i]:.2f})",
+                        level=3,
+                    )
+                else:
+                    removed_hints += 1
+                    self._print(
+                        f"detected hint at bin k={k[i]} (f={f[i]:.4f}, "
+                        f"power={p_den[i]:.2f}) - skipped due to duplicated "
+                        f"period ({period})",
+                        level=3,
+                    )
+        period_hints = list(period_candidates.values())
 
         # start with the highest power frequency:
         self._print("sorting hints by highest power first", level=2)
@@ -392,7 +404,9 @@ class Autoperiod:
                 )
 
             elif lslope > 0 > rslope:
-                self._print("hill detected --> VALID", level=3)
+                self._print(
+                    f"hill detected (steepness={steepness:.4f}) --> VALID", level=3
+                )
                 period = begin + np.argmax(acf[begin : end + 1])
                 self._print(f"corrected period (from {N // k}): {period}", level=3)
                 ranges.append((begin, end, optimal_t, period, slope))
@@ -409,12 +423,12 @@ class Autoperiod:
         )
 
         if self._plot:
-            n_plots = 3 if self._detrend and self._trend else 2
+            n_plots = 3 if self._detrend and self._trend is not None else 2
             fig, axs = plt.subplots(n_plots, 1, sharex="col")
             axs[0].set_title("Original time series")
             axs[0].set_xlabel("time")
 
-            if self._trend and self._orig_data:
+            if self._trend is not None and self._orig_data is not None:
                 axs[0].plot(self._orig_data, label="time series", color="blue")
                 axs[0].plot(self._trend, label="linear trend", color="black")
                 axs[1].set_title("Detrended time series")
